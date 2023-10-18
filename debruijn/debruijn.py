@@ -216,20 +216,8 @@ def solve_bubble(graph, ancestor_node, descendant_node):
     :return: (nx.DiGraph) A directed graph object
     """
     all_paths = list(nx.all_simple_paths(graph, source=ancestor_node, target=descendant_node))
-    
     path_lengths = [len(path) for path in all_paths]
-    weight_avg_list = []
-    
-    for path in all_paths:
-        weights = []
-        for i in range(len(path) - 1):
-            edge_data = graph[path[i]][path[i+1]]
-            weight = edge_data.get('weight', 1)
-            weights.append(weight)
-        
-        avg_weight = sum(weights) / len(weights) if weights else 1
-        weight_avg_list.append(avg_weight)
-    
+    weight_avg_list = [path_average_weight(graph, path) for path in all_paths]
     cleaned_graph = select_best_path(graph, all_paths, path_lengths, weight_avg_list)
     
     return cleaned_graph
@@ -269,27 +257,20 @@ def solve_entry_tips(graph, starting_nodes):
     :param graph: (nx.DiGraph) A directed graph object
     :return: (nx.DiGraph) A directed graph object
     """
-    for node in starting_nodes:
-        predecessors = list(graph.predecessors(node))
-        successors = list(graph.successors(node))
+    for start_node in starting_nodes:
+        successors = list(graph.successors(start_node))
 
-        if len(predecessors) > 1:
-            weights = [graph[pred][node]['weight'] for pred in predecessors]
-            min_weight = min(weights)
-            for pred in predecessors:
-                if graph[pred][node]['weight'] == min_weight:
-                    graph.remove_edge(pred, node)
-                    break
-        
-        if len(successors) > 1:
-            weights = [graph[node][succ]['weight'] for succ in successors]
-            min_weight = min(weights)
-            for succ in successors:
-                if graph[node][succ]['weight'] == min_weight:
-                    graph.remove_edge(node, succ)
-                    break
+        for node in successors:
+            predecessors = list(graph.predecessors(node))
+            if len(predecessors) > 1:
+                weights = [graph[pred][node]['weight'] for pred in predecessors]
+                min_weight = min(weights)
+                for pred in predecessors:
+                    if graph[pred][node]['weight'] == min_weight:
+                        graph.remove_edge(pred, node)
+                        break
+
     return graph
-    
 
 def solve_out_tips(graph, ending_nodes):
     """Remove out tips
@@ -297,18 +278,20 @@ def solve_out_tips(graph, ending_nodes):
     :param graph: (nx.DiGraph) A directed graph object
     :return: (nx.DiGraph) A directed graph object
     """
-    for node in ending_nodes:
-        successors = list(graph.successors(node))
-        if len(successors) > 1:
-            weights = [graph[node][succ]['weight'] for succ in successors]
-            min_weight = min(weights)
-            for succ in successors:
-                if graph[node][succ]['weight'] == min_weight:
-                    graph.remove_edge(node, succ)
-                    break
+    for end_node in ending_nodes:
+        predecessors = list(graph.predecessors(end_node))
+
+        for node in predecessors:
+            successors = list(graph.successors(node))
+            if len(successors) > 1:
+                weights = [graph[node][succ]['weight'] for succ in successors]
+                min_weight = min(weights)
+                for succ in successors:
+                    if graph[node][succ]['weight'] == min_weight:
+                        graph.remove_edge(node, succ)
+                        break
 
     return graph
-
 
 def get_starting_nodes(graph):
     """Get nodes without predecessors
@@ -319,7 +302,6 @@ def get_starting_nodes(graph):
     list_graph = list(graph.nodes)
     list_node = []
     for node in list_graph:
-        print(node)
         list_pred = list(graph.predecessors(node))
         if len(list_pred) == 0:
             list_node.append(node)
@@ -412,28 +394,18 @@ def main(): # pragma: no cover
     args = get_arguments()
 
     kmer_dict = build_kmer_dict(args.fastq_file, args.kmer_size)
-
-    # Build de Bruijn graph
     graph = build_graph(kmer_dict)
-
-    # Simplify bubbles
     graph = simplify_bubbles(graph)
-
+    starting_nodes = get_starting_nodes(graph)
+    ending_nodes = get_sink_nodes(graph)
     graph = solve_entry_tips(graph, starting_nodes)
     graph = solve_out_tips(graph, ending_nodes)
+    contigs_list = get_contigs(graph, starting_nodes, ending_nodes)
+    save_contigs(contigs_list, args.output_file)
 
-    # Optionally save graph image
+
     if args.graphimg_file:
-        nx.draw(graph, with_labels=True)
-        plt.savefig(args.graphimg_file, format="PNG")
-    
-
-    # Fonctions de dessin du graphe
-    # A decommenter si vous souhaitez visualiser un petit 
-    # graphe
-    # Plot the graph
-    # if args.graphimg_file:
-    #     draw_graph(graph, args.graphimg_file)
+        draw_graph(graph, args.graphimg_file)
 
 
 if __name__ == '__main__': # pragma: no cover
