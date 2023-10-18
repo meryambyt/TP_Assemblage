@@ -297,7 +297,18 @@ def solve_out_tips(graph, ending_nodes):
     :param graph: (nx.DiGraph) A directed graph object
     :return: (nx.DiGraph) A directed graph object
     """
-    pass
+    for node in graph.nodes():
+        successors = list(graph.successors(node))
+        if len(successors) > 1:
+            weights = [graph[node][succ]['weight'] for succ in successors]
+            min_weight = min(weights)
+            for succ in successors:
+                if graph[node][succ]['weight'] == min_weight:
+                    graph.remove_edge(node, succ)
+                    break
+
+    return graph
+
 
 def get_starting_nodes(graph):
     """Get nodes without predecessors
@@ -400,6 +411,8 @@ def main(): # pragma: no cover
     # Get arguments
     args = get_arguments()
 
+    
+
     # Fonctions de dessin du graphe
     # A decommenter si vous souhaitez visualiser un petit 
     # graphe
@@ -410,17 +423,4 @@ def main(): # pragma: no cover
 
 if __name__ == '__main__': # pragma: no cover
     main()
-    lis_seq = list(read_fastq("../data/eva71_two_reads.fq"))
-    # print(lis_seq)
-    # print(lis_seq[0])
-    #print(list(cut_kmer(lis_seq[0], 3)))
-    dico = build_kmer_dict("../data/eva71_two_reads.fq", 22)
-    g = build_graph(dico)
-    # draw_graph(graph, "graphimg.png")
-    starting_nodes = get_starting_nodes(g)
-    print(starting_nodes)
-    ending_nodes = get_sink_nodes(g)
-    print(ending_nodes)
-    contig_list = get_contigs(g, starting_nodes, ending_nodes)
-    save_contigs(contig_list, "test.txt")
-
+    
