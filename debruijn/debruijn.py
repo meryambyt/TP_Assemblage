@@ -27,13 +27,13 @@ import textwrap
 import matplotlib.pyplot as plt
 matplotlib.use("Agg")
 
-__author__ = "Your Name"
+__author__ = "Meryam Boulayat"
 __copyright__ = "Universite Paris Diderot"
-__credits__ = ["Your Name"]
+__credits__ = ["Meryam Boulayat"]
 __license__ = "GPL"
 __version__ = "1.0.0"
-__maintainer__ = "Your Name"
-__email__ = "your@email.fr"
+__maintainer__ = "Meryam Boulayat"
+__email__ = "meryam.boulayat@etu.u-paris.fr"
 __status__ = "Developpement"
 
 def isfile(path): # pragma: no cover
@@ -79,9 +79,13 @@ def read_fastq(fastq_file):
     """Extract reads from fastq files.
 
     :param fastq_file: (str) Path to the fastq file.
-    :return: A generator object that iterate the read sequences. 
+    :return: A generator object that yields the read sequences.
     """
-    pass
+    with open(fastq_file, "r") as f:
+        for line in f:
+            yield(next(f).strip())
+            next(f)
+            next(f)
 
 
 def cut_kmer(read, kmer_size):
@@ -90,7 +94,9 @@ def cut_kmer(read, kmer_size):
     :param read: (str) Sequence of a read.
     :return: A generator object that iterate the kmers of of size kmer_size.
     """
-    pass
+    seq_length = len(read)
+    for i in range(seq_length-(kmer_size-1)):
+        yield read[i:i+kmer_size]
 
 
 def build_kmer_dict(fastq_file, kmer_size):
@@ -99,7 +105,14 @@ def build_kmer_dict(fastq_file, kmer_size):
     :param fastq_file: (str) Path to the fastq file.
     :return: A dictionnary object that identify all kmer occurrences.
     """
-    pass
+    list_sequences = list(read_fastq(fastq_file))
+    dico = {}
+    for seq in list_sequences:
+        list_kmer = list(cut_kmer(seq, kmer_size))
+        for kmer in list_kmer:
+            if kmer not in dico :
+                dico[kmer] = list_kmer.count(kmer)
+    return dico
 
 
 def build_graph(kmer_dict):
@@ -108,7 +121,8 @@ def build_graph(kmer_dict):
     :param kmer_dict: A dictionnary object that identify all kmer occurrences.
     :return: A directed graph (nx) of all kmer substring and weight (occurrence).
     """
-    pass
+    G = nx.DiGraph
+
 
 
 def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
@@ -259,3 +273,9 @@ def main(): # pragma: no cover
 
 if __name__ == '__main__': # pragma: no cover
     main()
+    lis_seq = list(read_fastq("../data/eva71_two_reads.fq"))
+    # print(lis_seq)
+    # print(lis_seq[0])
+    print(list(cut_kmer(lis_seq[0], 3)))
+    dico = build_kmer_dict("../data/eva71_two_reads.fq", 3)
+    print(dico)
