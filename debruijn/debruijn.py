@@ -133,7 +133,7 @@ def build_graph(kmer_dict):
     for key, val in dico.items():
         preffixe = val[0]
         suffixe = val[1]
-        G.add_edge(preffixe, suffixe, weight = len(key)-1)
+        G.add_edge(preffixe, suffixe, weight = kmer_dict[key])
 
     return G
 
@@ -214,6 +214,14 @@ def get_starting_nodes(graph):
     :param graph: (nx.DiGraph) A directed graph object
     :return: (list) A list of all nodes without predecessors
     """
+    list_graph = list(graph.nodes)
+    list_node = []
+    for node in list_graph:
+        list_pred = list(graph.predecessors(node))
+        if len(list_pred) == 0:
+            list_node.append(node)
+
+    return list_node
     
 
 def get_sink_nodes(graph):
@@ -222,7 +230,15 @@ def get_sink_nodes(graph):
     :param graph: (nx.DiGraph) A directed graph object
     :return: (list) A list of all nodes without successors
     """
-    pass
+    list_graph = list(graph.nodes)
+    list_node = []
+    for node in list_graph:
+        list_pred = list(graph.successors(node))
+        if len(list_pred) == 0:
+            list_node.append(node)
+
+    return list_node
+    
 
 def get_contigs(graph, starting_nodes, ending_nodes):
     """Extract the contigs from the graph
@@ -232,7 +248,7 @@ def get_contigs(graph, starting_nodes, ending_nodes):
     :param ending_nodes: (list) A list of nodes without successors
     :return: (list) List of [contiguous sequence and their length]
     """
-    pass
+    
 
 def save_contigs(contigs_list, output_file):
     """Write all contigs in fasta format
@@ -292,5 +308,6 @@ if __name__ == '__main__': # pragma: no cover
     #print(list(cut_kmer(lis_seq[0], 3)))
     dico = build_kmer_dict("../data/eva71_two_reads.fq", 3)
     print(dico)
-    build_graph(dico)
+    g = build_graph(dico)
     # draw_graph(graph, "graphimg.png")
+    get_starting_nodes(g)
