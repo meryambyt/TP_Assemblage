@@ -121,8 +121,21 @@ def build_graph(kmer_dict):
     :param kmer_dict: A dictionnary object that identify all kmer occurrences.
     :return: A directed graph (nx) of all kmer substring and weight (occurrence).
     """
-    G = nx.DiGraph
+    G = nx.DiGraph()
+    list_kmer = list(kmer_dict.keys())
+    dico = {}
+    for kmer in list_kmer:
+        preffixe = kmer[0:(len(kmer)-1)]
+        suffixe = kmer[1:(len(kmer))]
+        dico[kmer] = [preffixe, suffixe]
 
+    
+    for key, val in dico.items():
+        preffixe = val[0]
+        suffixe = val[1]
+        G.add_edge(preffixe, suffixe, weight = len(key)-1)
+
+    return G
 
 
 def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
@@ -201,7 +214,7 @@ def get_starting_nodes(graph):
     :param graph: (nx.DiGraph) A directed graph object
     :return: (list) A list of all nodes without predecessors
     """
-    pass
+    
 
 def get_sink_nodes(graph):
     """Get nodes without successors
@@ -276,6 +289,8 @@ if __name__ == '__main__': # pragma: no cover
     lis_seq = list(read_fastq("../data/eva71_two_reads.fq"))
     # print(lis_seq)
     # print(lis_seq[0])
-    print(list(cut_kmer(lis_seq[0], 3)))
+    #print(list(cut_kmer(lis_seq[0], 3)))
     dico = build_kmer_dict("../data/eva71_two_reads.fq", 3)
     print(dico)
+    build_graph(dico)
+    # draw_graph(graph, "graphimg.png")
