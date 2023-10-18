@@ -269,7 +269,7 @@ def solve_entry_tips(graph, starting_nodes):
     :param graph: (nx.DiGraph) A directed graph object
     :return: (nx.DiGraph) A directed graph object
     """
-    for node in graph.nodes():
+    for node in starting_nodes:
         predecessors = list(graph.predecessors(node))
         successors = list(graph.successors(node))
 
@@ -297,7 +297,7 @@ def solve_out_tips(graph, ending_nodes):
     :param graph: (nx.DiGraph) A directed graph object
     :return: (nx.DiGraph) A directed graph object
     """
-    for node in graph.nodes():
+    for node in ending_nodes:
         successors = list(graph.successors(node))
         if len(successors) > 1:
             weights = [graph[node][succ]['weight'] for succ in successors]
@@ -411,6 +411,21 @@ def main(): # pragma: no cover
     # Get arguments
     args = get_arguments()
 
+    kmer_dict = build_kmer_dict(args.fastq_file, args.kmer_size)
+
+    # Build de Bruijn graph
+    graph = build_graph(kmer_dict)
+
+    # Simplify bubbles
+    graph = simplify_bubbles(graph)
+
+    graph = solve_entry_tips(graph, starting_nodes)
+    graph = solve_out_tips(graph, ending_nodes)
+
+    # Optionally save graph image
+    if args.graphimg_file:
+        nx.draw(graph, with_labels=True)
+        plt.savefig(args.graphimg_file, format="PNG")
     
 
     # Fonctions de dessin du graphe
