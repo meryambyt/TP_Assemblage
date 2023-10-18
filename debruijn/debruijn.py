@@ -133,7 +133,8 @@ def build_graph(kmer_dict):
     for key, val in dico.items():
         preffixe = val[0]
         suffixe = val[1]
-        G.add_edge(preffixe, suffixe, weight = kmer_dict[key])
+        G.add_edge(preffixe, suffixe, weight = len(key)-1)
+        # kmer_dict[key]
 
     return G
 
@@ -260,7 +261,7 @@ def simplify_bubbles(graph):
             break
 
     return graph
-    
+
 
 def solve_entry_tips(graph, starting_nodes):
     """Remove entry tips
@@ -268,6 +269,26 @@ def solve_entry_tips(graph, starting_nodes):
     :param graph: (nx.DiGraph) A directed graph object
     :return: (nx.DiGraph) A directed graph object
     """
+    for node in graph.nodes():
+        predecessors = list(graph.predecessors(node))
+        successors = list(graph.successors(node))
+
+        if len(predecessors) > 1:
+            weights = [graph[pred][node]['weight'] for pred in predecessors]
+            min_weight = min(weights)
+            for pred in predecessors:
+                if graph[pred][node]['weight'] == min_weight:
+                    graph.remove_edge(pred, node)
+                    break
+        
+        if len(successors) > 1:
+            weights = [graph[node][succ]['weight'] for succ in successors]
+            min_weight = min(weights)
+            for succ in successors:
+                if graph[node][succ]['weight'] == min_weight:
+                    graph.remove_edge(node, succ)
+                    break
+    return graph
     
 
 def solve_out_tips(graph, ending_nodes):
