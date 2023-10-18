@@ -217,10 +217,10 @@ def get_starting_nodes(graph):
     list_graph = list(graph.nodes)
     list_node = []
     for node in list_graph:
+        print(node)
         list_pred = list(graph.predecessors(node))
         if len(list_pred) == 0:
             list_node.append(node)
-
     return list_node
     
 
@@ -248,7 +248,18 @@ def get_contigs(graph, starting_nodes, ending_nodes):
     :param ending_nodes: (list) A list of nodes without successors
     :return: (list) List of [contiguous sequence and their length]
     """
-    
+    list_contigs = []
+    for node_start in starting_nodes:
+        for node_end in ending_nodes:
+            if nx.has_path(graph, node_start, node_end):
+                paths = nx.all_simple_paths(graph, node_start, node_end)
+                for path in paths:
+                    sequence = path[0]
+                    for node in path[1:]:
+                        sequence += node[-1]
+                    list_contigs.append([sequence, len(sequence)])
+
+    return list_contigs
 
 def save_contigs(contigs_list, output_file):
     """Write all contigs in fasta format
@@ -256,7 +267,13 @@ def save_contigs(contigs_list, output_file):
     :param contig_list: (list) List of [contiguous sequence and their length]
     :param output_file: (str) Path to the output file
     """
-    pass
+    with open(output_file, 'w') as file:
+        for index, (contig, length) in enumerate(contigs_list):
+            header = f">contig_{index} len={length}"
+            sequence = textwrap.fill(contig, width=80)
+            
+            file.write(header + "\n")
+            file.write(sequence + "\n")
 
 
 def draw_graph(graph, graphimg_file): # pragma: no cover
@@ -306,8 +323,13 @@ if __name__ == '__main__': # pragma: no cover
     # print(lis_seq)
     # print(lis_seq[0])
     #print(list(cut_kmer(lis_seq[0], 3)))
-    dico = build_kmer_dict("../data/eva71_two_reads.fq", 3)
-    print(dico)
+    dico = build_kmer_dict("../data/eva71_two_reads.fq", 22)
     g = build_graph(dico)
     # draw_graph(graph, "graphimg.png")
-    get_starting_nodes(g)
+    starting_nodes = get_starting_nodes(g)
+    print(starting_nodes)
+    ending_nodes = get_sink_nodes(g)
+    print(ending_nodes)
+    contig_list = get_contigs(g, starting_nodes, ending_nodes)
+    save_contigs(contig_list, "test.txt")
+
