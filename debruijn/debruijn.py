@@ -134,7 +134,6 @@ def build_graph(kmer_dict):
         preffixe = val[0]
         suffixe = val[1]
         G.add_edge(preffixe, suffixe, weight = len(key)-1)
-        # kmer_dict[key]
 
     return G
 
